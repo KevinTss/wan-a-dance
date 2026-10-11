@@ -1,0 +1,31 @@
+{
+  "name": "@wad/db",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:reset": "prisma migrate reset --force",
+    "db:studio": "prisma studio",
+    "db:seed": "node prisma/seed.ts",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
+    "@wad/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@wad/config": "workspace:*",
+    "eslint": "^9.39.5",
+    "prisma": "7.10.0",
+    "typescript": "6.0.3"
+  }
+}

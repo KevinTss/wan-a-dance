@@ -1,0 +1,7 @@
+import { defineConfig } from 'prisma/config';
+
+export default defineConfig({
+  schema: './prisma/schema.prisma',
+  migrations: { path: './prisma/migrations', seed: 'node prisma/seed.ts' },
+  datasource: { url: process.env['DATABASE_URL'] ?? 'postgresql://wad:wad@localhost:5433/wad' },
+});

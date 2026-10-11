@@ -1,0 +1,33 @@
+{
+  "name": "@wad/auth",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./scopes": "./src/scopes.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@better-auth/api-key": "1.7.7",
+    "@wad/core": "workspace:*",
+    "@wad/db": "workspace:*",
+    "@wad/email": "workspace:*",
+    "@wad/i18n": "workspace:*",
+    "better-auth": "1.7.7",
+    "react": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "@wad/config": "workspace:*",
+    "@wad/testing": "workspace:*",
+    "eslint": "^9.39.5",
+    "typescript": "6.0.3",
+    "vitest": "5.0.3"
+  }
+}

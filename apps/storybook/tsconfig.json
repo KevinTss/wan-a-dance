@@ -1,0 +1,5 @@
+{
+  "extends": "@wad/config/tsconfig/react.json",
+  "compilerOptions": { "types": ["node"] },
+  "include": [".storybook/*.ts", ".storybook/*.tsx", ".storybook/*.d.ts", "vitest.config.ts"]
+}

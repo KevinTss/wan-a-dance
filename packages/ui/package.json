@@ -1,0 +1,41 @@
+{
+  "name": "@wad/ui",
+  "private": true,
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles.css": "./src/tokens/styles.css"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "cmdk": "1.1.1",
+    "input-otp": "1.5.0",
+    "lucide-react": "1.55.0",
+    "radix-ui": "1.7.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "sonner": "2.0.8",
+    "tailwind-merge": "3.7.0"
+  },
+  "devDependencies": {
+    "@storybook/addon-docs": "10.6.1",
+    "@storybook/nextjs-vite": "10.6.1",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@wad/config": "workspace:*",
+    "eslint": "^9.39.5",
+    "eslint-plugin-better-tailwindcss": "4.9.0",
+    "storybook": "10.6.1",
+    "tailwindcss": "4.3.3",
+    "typescript": "6.0.3"
+  }
+}

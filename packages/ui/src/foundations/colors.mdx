@@ -1,0 +1,58 @@
+import { Meta, ColorPalette, ColorItem } from '@storybook/addon-docs/blocks';
+
+<Meta title="Foundations/Colors" />
+
+# Colours
+
+Semantic tokens only. Components never use raw palette classes (`bg-zinc-100`) or hex values; lint fails if they do.
+Every token has a light and a dark value (`[data-theme='dark']`).
+
+<ColorPalette>
+  <ColorItem
+    title="Surfaces"
+    subtitle="canvas · surface · sunken · hover"
+    colors={{
+      canvas: 'var(--color-canvas)',
+      surface: 'var(--color-surface)',
+      sunken: 'var(--color-surface-sunken)',
+      hover: 'var(--color-surface-hover)',
+    }}
+  />
+  <ColorItem
+    title="Text"
+    subtitle="text · muted · faint"
+    colors={{
+      text: 'var(--color-text)',
+      muted: 'var(--color-text-muted)',
+      faint: 'var(--color-text-faint)',
+    }}
+  />
+  <ColorItem
+    title="Borders"
+    subtitle="subtle · default · strong"
+    colors={{
+      subtle: 'var(--color-border-subtle)',
+      border: 'var(--color-border)',
+      strong: 'var(--color-border-strong)',
+    }}
+  />
+  <ColorItem
+    title="Accent"
+    subtitle="One accent: primary actions, focus, selection"
+    colors={{
+      accent: 'var(--color-accent)',
+      hover: 'var(--color-accent-hover)',
+      subtle: 'var(--color-accent-subtle)',
+    }}
+  />
+  <ColorItem
+    title="Status"
+    subtitle="success · warning · danger · info"
+    colors={{
+      success: 'var(--color-success)',
+      warning: 'var(--color-warning)',
+      danger: 'var(--color-danger)',
+      info: 'var(--color-info)',
+    }}
+  />
+</ColorPalette>

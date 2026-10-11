@@ -1,0 +1,14 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreDependencies": ["@fontsource-variable/inter", "server-only", "tailwindcss"],
+  "workspaces": {
+    ".": { "entry": ["scripts/*.ts"] },
+    "apps/web": {
+      "entry": ["src/app/**/*.{ts,tsx}", "src/proxy.ts", "src/i18n/request.ts", "next.config.ts"]
+    },
+    "apps/storybook": { "entry": [".storybook/*.{ts,tsx}"] },
+    "apps/e2e": { "entry": ["tests/**/*.ts", "scripts/*.{ts,mjs}", "*.config.ts"] },
+    "packages/*": { "entry": ["src/index.ts", "src/**/*.test.{ts,tsx}"] },
+    "packages/ui": { "entry": ["src/index.ts", "src/**/*.stories.tsx"] }
+  }
+}

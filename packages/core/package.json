@@ -1,0 +1,23 @@
+{
+  "name": "@wad/core",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./money": "./src/money/index.ts",
+    "./authz": "./src/authz/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@vitest/coverage-v8": "5.0.3",
+    "@wad/config": "workspace:*",
+    "eslint": "^9.39.5",
+    "typescript": "6.0.3",
+    "vitest": "5.0.3"
+  }
+}

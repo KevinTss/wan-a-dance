@@ -1,0 +1,45 @@
+{
+  "name": "wan-a-dance",
+  "private": true,
+  "packageManager": "pnpm@11.17.0",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:storybook": "turbo run test:storybook",
+    "test:e2e": "pnpm --filter @wad/e2e test:ui",
+    "test:api": "pnpm --filter @wad/e2e test:api",
+    "test:visual": "pnpm --filter @wad/e2e test:visual",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check:stories": "node scripts/check-stories.ts",
+    "check:docs": "node scripts/check-docs.ts",
+    "check:agents": "node scripts/check-agents-size.ts",
+    "check:story-coverage": "node scripts/check-story-coverage.ts",
+    "check:i18n": "pnpm --filter @wad/i18n check",
+    "knip": "knip",
+    "verify": "pnpm format:check && turbo run typecheck lint test test:storybook && pnpm check:stories && pnpm check:agents && pnpm check:i18n",
+    "verify:fast": "turbo run typecheck lint --affected",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down -v",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "prepare": "lefthook install || true"
+  },
+  "devDependencies": {
+    "@changesets/changelog-github": "^1.0.1",
+    "@changesets/cli": "3.0.3",
+    "@types/node": "^22.20.5",
+    "knip": "6.41.0",
+    "lefthook": "2.2.1",
+    "prettier": "^3.9.10",
+    "turbo": "2.11.7",
+    "typescript": "6.0.3"
+  },
+  "type": "module"
+}

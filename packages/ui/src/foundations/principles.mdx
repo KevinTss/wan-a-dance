@@ -1,0 +1,19 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Foundations/Principles" />
+
+# Design principles
+
+1. **Quiet chrome, loud content.** Tone shifts and soft shadows instead of heavy borders.
+2. **One accent colour.** Neutrals do the work; accent = primary action, focus, selection.
+3. **Floating, rounded surfaces.** Translucent sidebar, content in one rounded canvas. Radius 8 / 12 / 16.
+4. **Keyboard-first.** ⌘K reaches everything; every primary action has a shortcut.
+5. **Calm density.** 14px base, 4px grid.
+6. **Subtle motion.** 150–200ms ease-out, respects reduced motion.
+7. **Light and dark** from tokens only.
+8. **Accessible by default.** AA contrast, visible focus, axe must pass on every story.
+
+## Tiers
+
+`Primitives` → `Patterns` → `Layout` → domain components (in `apps/web`). A tier only imports from tiers before it.
+All user-facing strings arrive as props; the design system holds no copy.

@@ -1,0 +1,30 @@
+import { Meta, Typeset } from '@storybook/addon-docs/blocks';
+
+<Meta title="Foundations/Typography" />
+
+# Typography
+
+Inter Variable. Calm density: 14px base, 13px secondary. At most two weights per screen (400, 600).
+
+<Typeset
+  fontFamily="var(--font-sans)"
+  fontSizes={[
+    'var(--text-xs)',
+    'var(--text-sm)',
+    'var(--text-base)',
+    'var(--text-lg)',
+    'var(--text-xl)',
+    'var(--text-2xl)',
+    'var(--text-display)',
+  ]}
+  sampleText="Salsa on Thursday, 19:30 — 12 leaders, 14 followers"
+/>
+
+| Token                  | Size      | Use                    |
+| ---------------------- | --------- | ---------------------- |
+| `text-xs`              | 12px      | Badges, keyboard hints |
+| `text-sm`              | 13px      | Secondary text, labels |
+| `text-base`            | 14px      | Body, inputs, buttons  |
+| `text-lg`              | 16px      | Card and dialog titles |
+| `text-xl` / `text-2xl` | 20 / 24px | Page titles            |
+| `text-display`         | 32px      | Marketing only         |

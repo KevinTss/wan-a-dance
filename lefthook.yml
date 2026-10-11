@@ -1,0 +1,21 @@
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      glob: '*.{ts,tsx,js,mjs,json,md,css,yml,yaml}'
+      run: pnpm exec prettier --write --ignore-unknown {staged_files}
+      stage_fixed: true
+    secrets:
+      run: '! git diff --cached -U0 | grep -E "^\+.*(re_[A-Za-z0-9]{20,}|wad_[A-Za-z0-9_-]{30,}|sk_live_[A-Za-z0-9]+|BEGIN (RSA|EC|OPENSSH) PRIVATE KEY)"'
+
+commit-msg:
+  commands:
+    jira-key:
+      run: |
+        head -1 {1} | grep -qE '^(WD-[0-9]+ [A-Z]|chore: |Version packages|Merge |Revert )' || {
+          echo "Commit message must start with a Jira key: 'WD-123 Add member archive' (or 'chore: …' for tooling only)."; exit 1; }
+
+pre-push:
+  commands:
+    verify-fast:
+      run: pnpm verify:fast

@@ -1,0 +1,31 @@
+{
+  "name": "@wad/e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare-db": "node scripts/prepare-db.ts",
+    "test:ui": "node scripts/prepare-db.ts && playwright test --project=ui-*",
+    "test:api": "node scripts/prepare-db.ts && playwright test --project=api",
+    "test:visual": "node scripts/visual.ts",
+    "test:visual:update": "node scripts/visual.ts --update-snapshots",
+    "test:smoke": "playwright test --config=playwright.smoke.config.ts",
+    "report": "playwright show-report",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.64.0",
+    "@types/node": "^22.20.5",
+    "@wad/auth": "workspace:*",
+    "@wad/config": "workspace:*",
+    "@wad/db": "workspace:*",
+    "@wad/email": "workspace:*",
+    "@wad/storybook": "workspace:*",
+    "@wad/testing": "workspace:*",
+    "@wad/web": "workspace:*",
+    "eslint": "^9.39.5",
+    "eslint-plugin-playwright": "^2.12.1",
+    "typescript": "6.0.3"
+  }
+}

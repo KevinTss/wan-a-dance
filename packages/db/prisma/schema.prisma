@@ -1,0 +1,959 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Models
+////////////////////////////////////////////////////////////////////////////////
+
+model User {
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(3)
+  deletedAt DateTime? @db.Timestamptz(3)
+
+  firstName    String?
+  lastName     String?
+  token        String?
+  isSuperAdmin Boolean?
+
+  email         String? @unique
+  emailVerified Boolean @default(false)
+  name          String  @default("")
+  image         String?
+  locale        String?
+
+  sessions     AuthSession[]
+  authAccounts AuthAccount[]
+  apiKeys      ApiKey[]
+
+  accounts   Account[]
+  workspaces Member[]  @relation("workspaces")
+
+  notifications           Notification[]
+  notificationPreferences NotificationPreferences?
+
+  sentInvitations     Invitation[] @relation("sentInvitations")
+  receivedInvitations Invitation[] @relation("receivedInvitations")
+
+  createdWorkspaces Workspace[]
+  createdMembers    Member[]    @relation("createdMembers")
+  removedMembers    Member[]    @relation("removedMembers")
+
+  assignedDanceLevels MemberDanceLevel[]
+
+  // Materials relationships
+  createdMaterials  Material[]             @relation("createdMaterials")
+  receivedMaterials MaterialStudentShare[] @relation("receivedMaterials")
+  sharedMaterials   MaterialStudentShare[] @relation("sharedMaterials")
+
+  @@map("users")
+}
+
+model NotificationPreferences {
+  id                        String  @id @default(uuid())
+  userId                    String  @unique
+  emailNotificationsEnabled Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  provider        AccountProvider
+  email           String?
+  password        String?
+  isEmailVerified Boolean?
+  phone           String?
+  whatsappOptedInAt  DateTime? @db.Timestamptz(3)
+  whatsappOptedOutAt DateTime? @db.Timestamptz(3)
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  resetToken PasswordResetToken?
+  emailToken EmailConfirmationToken?
+
+  @@unique([userId, provider])
+  @@map("accounts")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+
+  token String @unique @db.Uuid
+
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  accountId String  @unique
+
+  @@map("password_reset_tokens")
+}
+
+model EmailConfirmationToken {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+
+  token String @unique @db.Uuid
+
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  accountId String  @unique
+
+  @@map("email_confirmation_tokens")
+}
+
+model Workspace {
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(3)
+  deletedAt DateTime? @db.Timestamptz(3)
+
+  createdById String // ID of the user who created this workspace
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  name String
+  slug String? @unique
+
+  configuration WorkspaceConfig?
+  members       Member[]
+  events        Event[]
+  invitations   Invitation[]
+  materials     Material[]
+
+  // Credits & Entitlements
+  products              Product[]
+  purchases             Purchase[]
+  entitlementGrants     EntitlementGrant[]
+
+  // WhatsApp
+  conversations         Conversation[]
+  whatsappUsageRecords  WhatsAppUsageRecord[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceConfig {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  weekStart WeekStart
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  workspaceId String    @unique
+
+  danceTypes DanceType[] @default([])
+
+  // Member lifecycle settings
+  autoCreateLeads Boolean @default(true) // auto-create LEAD on public event registration
+
+  // Cancellation policy (merged from WorkspaceCancellationPolicy)
+  fullRestoreBeforeHours    Int? // null = never restore; cancel > N hours before → full restore
+  partialRestoreBeforeHours Int?
+  partialRestorePercent     Int? // 0-100
+
+  @@map("workspaceConfig")
+}
+
+model Member {
+  id String @id @default(uuid())
+
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime? @db.Timestamptz(3)
+  removedById String?
+  removedBy   User?     @relation(name: "removedMembers", fields: [removedById], references: [id])
+
+  createdById String // ID of the user who added the member to the workspace
+  createdBy   User   @relation(name: "createdMembers", fields: [createdById], references: [id])
+
+  user   User?   @relation(name: "workspaces", fields: [userId], references: [id])
+  userId String?
+
+  name  String? // Can be empty if the user exists, required if user is null, by default, overrode by user.firstName + user.lastName
+  email String?
+  phone String?
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  workspaceId String
+
+  attendances Attendee[]
+
+  roles WorkspaceRole[]
+
+  level              Int?
+  preferredDanceRole DanceRole? // leave empty if there is no preference?
+
+  invitation  Invitation?        @relation("invitation") // invited through this invitation
+  danceLevels MemberDanceLevel[]
+
+  // Member lifecycle
+  status            MemberStatus      @default(LEAD)
+  statusUpdatedAt   DateTime          @default(now()) @db.Timestamptz(3)
+  acquisitionSource AcquisitionSource @default(MANUAL)
+  acquisitionEventId String?          // Event.id that triggered auto-creation
+
+  statusHistory MemberStatusHistory[]
+
+  // Credits & Entitlements
+  purchases         Purchase[]
+  entitlementGrants EntitlementGrant[]
+
+  // Messaging
+  conversations Conversation[]
+
+  @@index([workspaceId, status])
+  @@map("members")
+}
+
+model MemberStatusHistory {
+  id         String       @id @default(uuid())
+  createdAt  DateTime     @default(now()) @db.Timestamptz(3)
+
+  memberId   String
+  member     Member       @relation(fields: [memberId], references: [id])
+
+  fromStatus MemberStatus?
+  toStatus   MemberStatus
+  reason     String?
+  triggeredBy String?     // userId or "system"
+
+  @@index([memberId])
+  @@map("member_status_history")
+}
+
+model MemberDanceLevel {
+  id String @id @default(uuid())
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId String
+
+  danceType DanceType
+  level     MemberLevel
+
+  assignedBy   User   @relation(fields: [assignedById], references: [id])
+  assignedById String
+  assignedAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  note String?
+
+  @@unique([memberId, danceType])
+  @@index([danceType, level])
+  @@index([memberId])
+  @@map("member_dance_levels")
+}
+
+model Event {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  parentId  String?
+
+  //createdById String
+  //createdBy User
+  // managedById String
+  // managedBy Member
+
+  name           String
+  description    String?
+  dateStart      DateTime  @db.Timestamptz(3)
+  dateEnd        DateTime? @db.Timestamptz(3)
+  location       String?
+  capacityMin    Int?
+  capacityMax    Int?
+  leaderOffset   Int?      @default(0)
+  followerOffset Int?      @default(0)
+  // @see https://developers.google.com/calendar/api/v3/reference/events#recurrence
+  rule           String[]
+
+  attendees Attendee[]
+
+  invitations Invitation[]
+  materials   Material[] @relation("eventMaterials")
+  danceTypes  DanceType[] @default([])
+
+  parent   Event?  @relation("event_parent_child", fields: [parentId], references: [id])
+  children Event[] @relation("event_parent_child")
+
+  organizer   Workspace       @relation(fields: [organizerId], references: [id])
+  organizerId String
+  visibility  EventVisibility @default(WORKSPACE)
+  isTrial     Boolean         @default(false)
+
+  cancellationPolicyOverride EventCancellationPolicyOverride?
+
+  @@unique([parentId, dateStart])
+  @@index([parentId])
+  @@index([organizerId, dateStart])
+  @@map("events")
+}
+
+model Attendee {
+  id String @id @default(uuid())
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  role DanceRole?
+  type AttendanceType @default(WAITING)
+
+  member   Member @relation(fields: [memberId], references: [id])
+  memberId String
+
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String
+
+  invitation Invitation? @relation("invitation") // invited through this invitatino
+
+  // Credits & entitlements
+  consumedEntitlementId String?
+  consumedEntitlement   EntitlementGrant? @relation(fields: [consumedEntitlementId], references: [id])
+  cancelledAt           DateTime?         @db.Timestamptz(3)
+  cancelledById         String?           // userId of the canceller
+  restorationStatus     RestorationStatus @default(NONE)
+
+  @@unique([memberId, eventId])
+  @@map("attendees")
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Credits & Entitlements
+////////////////////////////////////////////////////////////////////////////////
+
+model Product {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  name        String
+  description String?
+  kind        EntitlementKind
+  isActive    Boolean  @default(true)
+
+  // Credit pack specifics
+  credits     Int?             // null for pass kinds
+  validityDays Int?            // number of days from purchase date
+
+  // Restrictions
+  restrictedDanceTypes DanceType[] @default([]) // empty = unrestricted
+  maxUsagePerWeek      Int?
+
+  prices    Price[]
+  purchases Purchase[]
+
+  @@index([workspaceId, isActive])
+  @@map("products")
+}
+
+model Price {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+
+  amountCents Int    // price in euro cents
+  currency    String @default("EUR")
+  label       String? // e.g. "Early bird"
+  isActive    Boolean @default(true)
+
+  purchases Purchase[]
+
+  @@index([productId, isActive])
+  @@map("prices")
+}
+
+model EventCancellationPolicyOverride {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  eventId   String   @unique
+  event     Event    @relation(fields: [eventId], references: [id])
+
+  // Override the workspace config policy for this specific event
+  noRestore Boolean @default(false) // if true, never restore regardless of workspace policy
+
+  @@map("event_cancellation_policy_overrides")
+}
+
+model Purchase {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  memberId    String
+  member      Member    @relation(fields: [memberId], references: [id])
+
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id])
+
+  priceId     String?
+  price       Price?    @relation(fields: [priceId], references: [id])
+
+  status      PurchaseStatus @default(PENDING)
+  paidAt      DateTime?      @db.Timestamptz(3)
+  refundedAt  DateTime?      @db.Timestamptz(3)
+  notes       String?
+
+  createdById String    // userId of the teacher who created it
+  paidById    String?   // userId who confirmed payment
+
+  entitlementGrants EntitlementGrant[]
+
+  @@index([workspaceId, memberId])
+  @@map("purchases")
+}
+
+model EntitlementGrant {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  memberId    String
+  member      Member    @relation(fields: [memberId], references: [id])
+
+  kind         EntitlementKind
+  source       EntitlementSource
+  status       EntitlementStatus @default(ACTIVE)
+
+  // Credit balance (for CREDIT_BALANCE kind)
+  creditsTotal     Int @default(0)
+  creditsRemaining Int @default(0)
+
+  // Validity
+  validFrom  DateTime  @db.Timestamptz(3)
+  validUntil DateTime? @db.Timestamptz(3)
+
+  // Restrictions (inherited from Product at purchase time, or set manually)
+  restrictedDanceTypes DanceType[] @default([])
+  maxUsagePerWeek      Int?
+
+  // Traceability
+  purchaseId  String?
+  purchase    Purchase? @relation(fields: [purchaseId], references: [id])
+  grantedById String?   // userId (null = system)
+
+  transactions EntitlementTransaction[]
+  consumedByAttendees Attendee[]
+
+  @@index([workspaceId, memberId, status])
+  @@map("entitlement_grants")
+}
+
+model EntitlementTransaction {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  grantId   String
+  grant     EntitlementGrant @relation(fields: [grantId], references: [id])
+
+  type      EntitlementTransactionType
+  delta     Int      // positive = credit, negative = debit
+  balanceAfter Int
+  attendeeId  String? // which booking triggered this
+  notes       String?
+
+  @@index([grantId])
+  @@map("entitlement_transactions")
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// WhatsApp / Messaging
+////////////////////////////////////////////////////////////////////////////////
+
+model Conversation {
+  id            String              @id @default(uuid())
+  createdAt     DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime            @updatedAt @db.Timestamptz(3)
+
+  workspaceId   String
+  workspace     Workspace           @relation(fields: [workspaceId], references: [id])
+
+  memberId      String
+  member        Member              @relation(fields: [memberId], references: [id])
+
+  channel       ConversationChannel
+  state         ConversationState   @default(OPEN)
+  lastMessageAt DateTime            @db.Timestamptz(3)
+  metadata      Json?               // channel-specific data (e.g. Meta conversationId, 24h window expiry)
+
+  messages Message[]
+
+  @@index([workspaceId, memberId, channel])
+  @@map("conversations")
+}
+
+model Message {
+  id             String          @id @default(uuid())
+  createdAt      DateTime        @default(now()) @db.Timestamptz(3)
+
+  conversationId String
+  conversation   Conversation    @relation(fields: [conversationId], references: [id])
+
+  direction      MessageDirection
+  type           MessageType
+  templateName   String?
+  body           String
+  status         MessageStatus   @default(PENDING)
+  externalId     String?         // Meta message ID or equivalent
+  sentAt         DateTime?       @db.Timestamptz(3)
+  deliveredAt    DateTime?       @db.Timestamptz(3)
+  readAt         DateTime?       @db.Timestamptz(3)
+
+  @@index([conversationId])
+  @@map("messages")
+}
+
+model WhatsAppUsageRecord {
+  id                String   @id @default(uuid())
+  createdAt         DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime @updatedAt @db.Timestamptz(3)
+
+  workspaceId       String
+  workspace         Workspace @relation(fields: [workspaceId], references: [id])
+
+  month             String   // "2026-03" YYYY-MM
+  category          WhatsAppConversationCategory
+  conversationCount Int      @default(0)
+  estimatedCostEur  Decimal  @db.Decimal(10, 4) @default(0)
+
+  @@unique([workspaceId, month, category])
+  @@index([workspaceId, month])
+  @@map("whatsapp_usage_records")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  type NotificationType // Using an enum now
+
+  read Boolean @default(false)
+
+  // Specific relationships
+  invitation   Invitation? @relation(fields: [invitationId], references: [id])
+  invitationId String?
+
+  // Future relationships could be added here
+  // event        Event?      @relation(fields: [eventId], references: [id])
+  // eventId      String?
+  // member       Member?     @relation(fields: [memberId], references: [id])
+  // memberId     String?
+
+  @@index([userId])
+  @@index([type])
+  @@index([read])
+}
+
+model Invitation {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  type InviteType
+
+  email     String? // Optional - if inviting by email
+  phone     String? // Optional - if inviting by phone
+  firstName String? // Optional - for placeholder invitations
+  lastName  String? // Optional - for placeholder invitations
+
+  token     String           @unique @db.Uuid
+  expiresAt DateTime         @db.Timestamptz(3)
+  status    InvitationStatus @default(PENDING)
+
+  // Relation to workspace being invited to
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id])
+  workspaceId String?
+
+  // Who sent the invitation
+  inviter   User   @relation("sentInvitations", fields: [inviterId], references: [id])
+  inviterId String
+
+  invitee   User?   @relation("receivedInvitations", fields: [inviteeId], references: [id])
+  inviteeId String?
+
+  memberSeatId String? @unique // The member the invitee will be linked with when he accepts the invitation
+  memberSeat   Member? @relation("invitation", fields: [memberSeatId], references: [id])
+
+  event   Event?  @relation(fields: [eventId], references: [id])
+  eventId String?
+
+  attendeeSeatId String?   @unique // The attendee the invitee will be linked with when he accepts the invitation
+  attendeeSeat   Attendee? @relation("invitation", fields: [attendeeSeatId], references: [id])
+
+  notifications Notification[] // notifications related to this invitation (received, accepted, declined, ...)
+
+  @@map("invitations")
+}
+
+model Material {
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(3)
+  deletedAt DateTime? @db.Timestamptz(3)
+
+  name        String
+  description String?
+
+  videoUrls String[]
+  imageUrls String[]
+
+  // Visibility and ownership
+  visibility MaterialVisibility @default(PRIVATE)
+
+  // Creator/Owner
+  createdBy   User   @relation("createdMaterials", fields: [createdById], references: [id])
+  createdById String
+
+  // Workspace scope (null if private or public)
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id])
+  workspaceId String?
+
+  // Hierarchical relationships - self-referencing for composite materials
+  parentMaterial   Material?  @relation("MaterialHierarchy", fields: [parentMaterialId], references: [id])
+  parentMaterialId String?
+  childMaterials   Material[] @relation("MaterialHierarchy")
+
+  // Events that use this material
+  events Event[] @relation("eventMaterials")
+
+  // Dance type classification
+  danceType DanceType?
+
+  // Individual student shares (optional feature)
+  studentShares MaterialStudentShare[]
+
+  @@map("materials")
+}
+
+model MaterialStudentShare {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  materialId String
+
+  student   User   @relation("receivedMaterials", fields: [studentId], references: [id])
+  studentId String
+
+  sharedBy   User   @relation("sharedMaterials", fields: [sharedById], references: [id])
+  sharedById String
+
+  // Tracking
+  viewedAt    DateTime?
+  canDownload Boolean   @default(false)
+  expiresAt   DateTime?
+
+  @@unique([materialId, studentId])
+  @@map("material_student_shares")
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Enums
+////////////////////////////////////////////////////////////////////////////////
+
+enum AccountProvider {
+  LOCAL
+  GOOGLE
+  FACEBOOK
+  WHATSAPP
+}
+
+enum InviteType {
+  WORKSPACE
+  EVENT
+}
+
+// Inspired by https://developers.google.com/calendar/api/v3/reference/settings
+/// Whether the week should start on Sunday (0), Monday (1) or Saturday (6)
+enum WeekStart {
+  SUNDAY
+  MONDAY
+  SATURDAY
+}
+
+enum AttendanceType {
+  VALIDATE
+  WAITING
+}
+
+enum DanceRole {
+  LEADER
+  FOLLOWER
+}
+
+enum WorkspaceRole {
+  OWNER
+  TEACHER
+  STUDENT
+}
+
+enum MemberStatus {
+  LEAD
+  TRIAL
+  ACTIVE
+  LAPSED
+  DEACTIVATED
+}
+
+enum AcquisitionSource {
+  PUBLIC_EVENT
+  TRIAL_CLASS
+  MANUAL
+  INVITATION
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum NotificationType {
+  INVITATION_RECEIVED
+  WORKSPACE_MEMBER_JOINED
+  // Add other types as needed
+}
+
+enum DanceType {
+  SALSA
+  BACHATA
+  KIZOMBA
+  MERENGUE
+  CHA_CHA
+  RUMBA
+  SAMBA
+  WALTZ
+  TANGO
+  QUICKSTEP
+  VIENNESE_WALTZ
+  LINDY_HOP
+  EAST_COAST_SWING
+  WEST_COAST_SWING
+  BALBOA
+  CHARLESTON
+  ARGENTINE_TANGO
+  MILONGA
+  VALS
+  BLUES
+  ZOUK
+  LAMBADA
+  MAMBO
+  CASINO
+  RUEDA
+  OTHER
+}
+
+enum MaterialVisibility {
+  PRIVATE
+  WORKSPACE
+  PUBLIC
+}
+
+enum EventVisibility {
+  PRIVATE
+  WORKSPACE
+  PUBLIC
+}
+
+enum MemberLevel {
+  STARTER
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum RestorationStatus {
+  NONE
+  PENDING
+  RESTORED
+  DENIED
+}
+
+enum EntitlementKind {
+  CREDIT_BALANCE
+  DROP_IN_PASS
+  COHORT_PASS
+  TRIAL_PASS
+}
+
+enum EntitlementSource {
+  PURCHASE
+  MANUAL_GRANT
+  SYSTEM
+}
+
+enum EntitlementStatus {
+  ACTIVE
+  CONSUMED
+  EXPIRED
+  REVOKED
+}
+
+enum PurchaseStatus {
+  PENDING
+  PAID
+  CANCELLED
+  REFUNDED
+}
+
+enum EntitlementTransactionType {
+  CREDIT
+  DEBIT
+  REVERSAL
+  EXPIRY
+}
+
+enum ConversationChannel {
+  WHATSAPP
+}
+
+enum ConversationState {
+  OPEN
+  CLOSED
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum MessageType {
+  TEMPLATE
+  FREE_TEXT
+  INTERACTIVE
+}
+
+enum MessageStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+enum WhatsAppConversationCategory {
+  UTILITY
+  MARKETING
+  SERVICE
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Better Auth
+////////////////////////////////////////////////////////////////////////////////
+
+model AuthSession {
+  id        String   @id
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("auth_sessions")
+}
+
+model AuthAccount {
+  id                    String    @id
+  createdAt             DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @db.Timestamptz(3)
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime? @db.Timestamptz(3)
+  refreshTokenExpiresAt DateTime? @db.Timestamptz(3)
+  scope                 String?
+  password              String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("auth_accounts")
+}
+
+model AuthVerification {
+  id         String   @id
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+  identifier String
+  value      String
+  expiresAt  DateTime @db.Timestamptz(3)
+
+  @@index([identifier])
+  @@map("auth_verifications")
+}
+
+model ApiKey {
+  id                  String    @id
+  createdAt           DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime  @updatedAt @db.Timestamptz(3)
+  configId            String    @default("default")
+  name                String?
+  start               String?
+  prefix              String?
+  key                 String    @unique
+  referenceId         String
+  refillInterval      Int?
+  refillAmount        Int?
+  lastRefillAt        DateTime? @db.Timestamptz(3)
+  enabled             Boolean?  @default(true)
+  rateLimitEnabled    Boolean?  @default(true)
+  rateLimitTimeWindow Int?
+  rateLimitMax        Int?
+  requestCount        Int?      @default(0)
+  remaining           Int?
+  lastRequest         DateTime? @db.Timestamptz(3)
+  expiresAt           DateTime? @db.Timestamptz(3)
+  permissions         String?
+  metadata            String?
+
+  user User @relation(fields: [referenceId], references: [id], onDelete: Cascade)
+
+  @@index([referenceId])
+  @@map("api_keys")
+}
+
+model AuthRateLimit {
+  id          String @id
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@map("auth_rate_limits")
+}
