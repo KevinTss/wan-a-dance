@@ -17,3 +17,4 @@ blob-report
 packages/db/src/generated
 .mailbox
 playwright-report-visual
+next-env.d.ts
