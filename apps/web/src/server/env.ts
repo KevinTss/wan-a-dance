@@ -13,7 +13,13 @@ const schema = z.object({
   NEXT_PUBLIC_APP_VERSION: z.string().default('0.0.0'),
 });
 
+const vercelUrl =
+  process.env['VERCEL_ENV'] === 'preview' && process.env['VERCEL_URL']
+    ? `https://${process.env['VERCEL_URL']}`
+    : undefined;
+
 export const env = schema.parse({
   ...process.env,
+  BETTER_AUTH_URL: process.env['BETTER_AUTH_URL'] ?? vercelUrl,
   NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION,
 });
