@@ -29,7 +29,7 @@
     "db:down": "docker compose down -v",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "prepare": "lefthook install || true"
+    "prepare": "[ -n \"$CI\" ] || lefthook install"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^1.0.1",
