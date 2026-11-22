@@ -1,50 +1,41 @@
-import { mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { captureMailer, clearMailbox, latestEmailTo, readMailbox } from './adapters/capture.ts';
-import { createMailer, sendOtpEmail } from './index.ts';
+import { describe, expect, it, vi } from 'vitest';
+import { createMailer, sendOtpEmail, type Mailer, type OutgoingEmail } from './index.ts';
 
-let dir: string;
-
-beforeEach(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'wad-mail-'));
-});
-
-afterEach(async () => {
-  await rm(dir, { recursive: true, force: true });
-});
+function mockMailer() {
+  const send = vi.fn<(email: OutgoingEmail) => Promise<void>>(() => Promise.resolve());
+  const mailer: Mailer = { send };
+  return { mailer, send };
+}
 
 describe('otp email', () => {
   it.each([
     ['en', '482913 is your Wan a Dance code', 'expires in 10 minutes'],
     ['fr', '482913 est votre code Wan a Dance', 'expire dans 10 minutes'],
   ] as const)('renders in %s', async (locale, subject, body) => {
-    await sendOtpEmail(captureMailer(dir), {
-      to: 'Ana@School.com',
-      code: '482913',
-      locale,
-      minutes: 10,
-    });
-    const email = await latestEmailTo('ana@school.com', dir);
+    const { mailer, send } = mockMailer();
+    await sendOtpEmail(mailer, { to: 'ana@school.com', code: '482913', locale, minutes: 10 });
+    const email = send.mock.calls[0]?.[0];
+    expect(email?.to).toBe('ana@school.com');
     expect(email?.subject).toBe(subject);
     expect(email?.text).toContain(body);
     expect(email?.html).toContain('482913');
     expect(email?.html).toContain(`lang="${locale}"`);
-  });
-
-  it('keeps emails in order and can be cleared', async () => {
-    const mailer = captureMailer(dir);
-    await sendOtpEmail(mailer, { to: 'a@b.co', code: '111111', locale: 'en', minutes: 10 });
-    await sendOtpEmail(mailer, { to: 'a@b.co', code: '222222', locale: 'en', minutes: 10 });
-    expect((await latestEmailTo('a@b.co', dir))?.subject).toContain('222222');
-    expect(await readMailbox(dir)).toHaveLength(2);
-    await clearMailbox(dir);
-    expect(await readMailbox(dir)).toEqual([]);
+    expect(email?.tags).toEqual({ type: 'otp' });
   });
 });
 
 describe('createMailer', () => {
+  it('logs emails to the console by default for local development', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await sendOtpEmail(createMailer({}), {
+      to: 'a@b.co',
+      code: '123456',
+      locale: 'en',
+      minutes: 10,
+    });
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('123456 is your Wan a Dance code'));
+  });
+
   it('requires resend credentials', () => {
     expect(() => createMailer({ MAIL_ADAPTER: 'resend' })).toThrow(/RESEND_API_KEY/);
   });

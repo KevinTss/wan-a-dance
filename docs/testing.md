@@ -24,6 +24,6 @@ The web server runs with `MAIL_ADAPTER=capture`, writing emails to `apps/e2e/.ma
 
 ## Rules
 
-- Never mock our own code. Mock only third parties at the adapter (mail capture, Stripe test mode later).
+- Never mock our own code. Replace third parties at their seam with test-library mocks (`vi.fn()` mailer, Stripe test mode later).
 - Roles and labels for locators. No sleeps. No retries to hide flakiness (CI fails on flaky tests).
 - Coverage gate on `packages/core`: 90%.

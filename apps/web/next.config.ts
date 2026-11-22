@@ -6,6 +6,7 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const config: NextConfig = {
   reactStrictMode: true,
+  agentRules: false,
   typedRoutes: true,
   transpilePackages: [
     '@wad/ui',

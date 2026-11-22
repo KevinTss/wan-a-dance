@@ -32,7 +32,7 @@ packages/auth   Better Auth (email OTP, API keys)
 packages/api    Hono /api/v1 (bearer tokens only), OpenAPI
 packages/ui     Design system: tokens, primitives, patterns, layout
 packages/i18n   Messages (en, fr), locale + date helpers
-packages/email  React Email templates, mail adapters (resend | capture)
+packages/email  React Email templates, mail adapters (resend | console)
 packages/testing Postgres harness (template DB per worker), factories
 ```
 

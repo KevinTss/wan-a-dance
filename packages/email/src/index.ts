@@ -1,7 +1,7 @@
 import { render } from '@react-email/render';
 import { createElement } from 'react';
 import type { Locale } from '@wad/i18n';
-import { captureMailer } from './adapters/capture.ts';
+import { consoleMailer } from './adapters/console.ts';
 import { resendMailer } from './adapters/resend.ts';
 import { OtpEmail, otpEmailSubject } from './templates/otp-email.tsx';
 import type { Mailer } from './types.ts';
@@ -10,7 +10,7 @@ export type { Mailer, OutgoingEmail } from './types.ts';
 export { OtpEmail } from './templates/otp-email.tsx';
 
 export function createMailer(env: NodeJS.ProcessEnv = process.env): Mailer {
-  const adapter = env['MAIL_ADAPTER'] ?? 'capture';
+  const adapter = env['MAIL_ADAPTER'] ?? 'console';
   if (adapter === 'resend') {
     const apiKey = env['RESEND_API_KEY'];
     const from = env['MAIL_FROM'];
@@ -18,7 +18,7 @@ export function createMailer(env: NodeJS.ProcessEnv = process.env): Mailer {
       throw new Error('RESEND_API_KEY and MAIL_FROM are required for MAIL_ADAPTER=resend');
     return resendMailer(apiKey, from);
   }
-  if (adapter === 'capture') return captureMailer();
+  if (adapter === 'console') return consoleMailer();
   throw new Error(`Unknown MAIL_ADAPTER: ${adapter}`);
 }
 

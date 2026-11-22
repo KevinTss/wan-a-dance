@@ -111,7 +111,7 @@ jobs:
       DATABASE_URL: postgresql://wad:wad@localhost:5432/wad_e2e
       BETTER_AUTH_SECRET: ${{ secrets.E2E_AUTH_SECRET || 'ci-only-secret-ci-only-secret-0000000' }}
       BETTER_AUTH_URL: http://localhost:3200
-      MAIL_ADAPTER: capture
+      MAIL_ADAPTER: console
       PUBLIC_API_ENABLED: 'true'
     steps:
       - uses: actions/checkout@v4

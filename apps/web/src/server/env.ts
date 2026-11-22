@@ -5,7 +5,7 @@ const schema = z.object({
   DATABASE_URL: z.url(),
   BETTER_AUTH_SECRET: z.string().min(32),
   BETTER_AUTH_URL: z.url(),
-  MAIL_ADAPTER: z.enum(['resend', 'capture']).default('capture'),
+  MAIL_ADAPTER: z.enum(['resend', 'console']).default('console'),
   PUBLIC_API_ENABLED: z
     .enum(['true', 'false'])
     .default('false')

@@ -15,6 +15,5 @@ blob-report
 .DS_Store
 .vercel
 packages/db/src/generated
-.mailbox
 playwright-report-visual
 next-env.d.ts

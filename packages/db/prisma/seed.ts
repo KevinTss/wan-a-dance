@@ -17,6 +17,6 @@ const owner = await db.user.upsert({
 });
 
 console.warn(
-  `Seeded ${owner.email}. Sign in with that email; the code lands in apps/web/.mailbox.`,
+  `Seeded ${owner.email}. Sign in with that email; the code is printed in the pnpm dev terminal.`,
 );
 await db.$disconnect();

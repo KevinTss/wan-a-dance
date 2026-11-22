@@ -14,7 +14,7 @@ pnpm --filter @wad/db db:deploy
 pnpm dev              # web → http://localhost:3000 · storybook → http://localhost:6006
 ```
 
-Sign-in codes are written to `apps/web/.mailbox/` locally (`MAIL_ADAPTER=capture`).
+Sign-in codes are printed in the `pnpm dev` terminal locally (`MAIL_ADAPTER=console`).
 
 ## Quality gates
 

@@ -3,7 +3,7 @@ import {
   expectAccessible,
   test,
   uniqueEmail,
-  waitForCode,
+  issueCode,
 } from '../../src/fixtures/index.ts';
 
 test.describe('Sign-in with an email code', () => {
@@ -36,7 +36,6 @@ test.describe('Sign-in with an email code', () => {
     await page.goto('/sign-in');
     await page.getByLabel(t('Email', 'E-mail')).fill(email);
     await page.getByRole('button', { name: t('Email me a code', 'Recevoir un code') }).click();
-    await waitForCode(email);
     await expect(
       page.getByRole('button', { name: new RegExp(t('Send a new code in', 'Nouveau code dans')) }),
     ).toBeDisabled();
@@ -92,9 +91,9 @@ test.describe('Sign-in with an email code', () => {
     await page.goto('/sign-in?next=//evil.example.com');
     await page.getByLabel(t('Email', 'E-mail')).fill(email);
     await page.getByRole('button', { name: t('Email me a code', 'Recevoir un code') }).click();
-    await page
-      .getByRole('textbox', { name: t('6-digit code', 'Code à 6 chiffres') })
-      .fill(await waitForCode(email));
+    const codeInput = page.getByRole('textbox', { name: t('6-digit code', 'Code à 6 chiffres') });
+    await expect(codeInput).toBeVisible();
+    await codeInput.fill(await issueCode(email));
     await expect(page).toHaveURL(/^http:\/\/localhost:\d+\/$/);
   });
 });

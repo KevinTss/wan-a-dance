@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
-import { BASE_URL, E2E_PORT, MAILBOX_DIR, e2eDatabaseUrl } from './src/env.ts';
+import { BASE_URL, E2E_PORT, e2eDatabaseUrl } from './src/env.ts';
 
 const isCI = Boolean(process.env['CI']);
 const external = Boolean(process.env['E2E_BASE_URL']);
@@ -62,8 +62,7 @@ export default defineConfig({
           BETTER_AUTH_URL: BASE_URL,
           NEXT_PUBLIC_APP_URL: BASE_URL,
           BETTER_AUTH_SECRET: 'e2e-secret-e2e-secret-e2e-secret-0000',
-          MAIL_ADAPTER: 'capture',
-          MAIL_CAPTURE_DIR: MAILBOX_DIR,
+          MAIL_ADAPTER: 'console',
           PUBLIC_API_ENABLED: 'true',
         },
       },

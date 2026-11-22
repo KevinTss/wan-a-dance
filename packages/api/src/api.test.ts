@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, inject, it } from 'vitest';
 import { createAuth, type Auth } from '@wad/auth';
 import { createDb, type PrismaClient } from '@wad/db/client';
-import { captureMailer } from '@wad/email/capture';
 import { cloneTemplate, createUser, dropDatabase, truncateAll } from '@wad/testing';
 import { createApi, type Api } from './index.ts';
 
@@ -25,7 +24,7 @@ beforeAll(async () => {
     db,
     secret: 'test-secret-test-secret-test-secret-123',
     baseURL: 'http://localhost:3000',
-    mailer: captureMailer(),
+    mailer: { send: () => Promise.resolve() },
     rateLimitEnabled: false,
   });
   api = createApi({ auth, db, version: '0.0.0-test', enabled: true });
