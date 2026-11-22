@@ -148,10 +148,11 @@ jobs:
       - uses: changesets/action@v1
         with:
           version: pnpm version-packages
-          publish: node scripts/release.ts
           title: Version packages
           commit: Version packages
-          createGithubReleases: false
         env:
           GITHUB_TOKEN: ${{ secrets.CHANGESETS_TOKEN }}
+      - name: Tag and publish the GitHub Release (no-op when already released)
+        run: node scripts/release.ts
+        env:
           GH_TOKEN: ${{ secrets.CHANGESETS_TOKEN }}
