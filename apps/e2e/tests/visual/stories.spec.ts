@@ -26,6 +26,12 @@ for (const story of stories) {
     const theme = String(testInfo.project.metadata['theme'] ?? 'light');
     await page.goto(`/iframe.html?id=${story.id}&viewMode=story&globals=theme:${theme}`);
     await page.locator('#storybook-root').waitFor();
+    await page.waitForFunction(() => {
+      const preview = (
+        window as unknown as { __STORYBOOK_PREVIEW__?: { currentRender?: { phase?: string } } }
+      ).__STORYBOOK_PREVIEW__;
+      return ['finished', 'errored', 'aborted'].includes(preview?.currentRender?.phase ?? '');
+    });
     await page.evaluate(async () => {
       await document.fonts.ready;
     });
