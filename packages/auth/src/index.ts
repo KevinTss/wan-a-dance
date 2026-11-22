@@ -40,15 +40,26 @@ export interface CreateAuthOptions {
   rateLimitEnabled?: boolean;
 }
 
+function lazyMailer(provided: Mailer | undefined): Mailer {
+  let resolved = provided;
+  return {
+    send(email) {
+      resolved ??= createMailer();
+      return resolved.send(email);
+    },
+  };
+}
+
 export function createAuth({
   db,
   secret,
   baseURL,
-  mailer = createMailer(),
+  mailer,
   plugins = [],
   trustedOrigins = [],
   rateLimitEnabled = true,
 }: CreateAuthOptions) {
+  const outbox = lazyMailer(mailer);
   return betterAuth({
     appName: 'Wan a Dance',
     secret,
@@ -93,7 +104,7 @@ export function createAuth({
         overrideDefaultEmailVerification: true,
         rateLimit: { window: 60, max: 3 },
         async sendVerificationOTP({ email, otp }, ctx) {
-          await sendOtpEmail(mailer, {
+          await sendOtpEmail(outbox, {
             to: email,
             code: otp,
             locale: localeFromHeaders(ctx?.request?.headers ?? ctx?.headers),

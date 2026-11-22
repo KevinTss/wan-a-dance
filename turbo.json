@@ -9,13 +9,16 @@
       "dependsOn": ["^build", "^db:generate"],
       "outputs": [".next/**", "!.next/cache/**", "storybook-static/**", "dist/**"],
       "env": [
-        "DATABASE_URL",
+        "APP_*",
         "BETTER_AUTH_*",
-        "RESEND_*",
+        "DATABASE_URL",
+        "MAIL_*",
         "NEXT_PUBLIC_*",
         "PUBLIC_API_ENABLED",
-        "MAIL_*",
-        "APP_*"
+        "RESEND_*",
+        "VERCEL_ENV",
+        "VERCEL_GIT_COMMIT_SHA",
+        "VERCEL_URL"
       ]
     },
     "dev": {
@@ -53,5 +56,6 @@
     "test:visual": {
       "cache": false
     }
-  }
+  },
+  "globalPassThroughEnv": ["ENABLE_EXPERIMENTAL_COREPACK"]
 }
